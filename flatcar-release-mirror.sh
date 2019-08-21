@@ -87,7 +87,9 @@ download_folder() {
   # Appended paths will start with "./" but that's ok for Caddy
   for link in $links; do
     local keep="yes"
-    if [[ ! -z "$not_files" ]]; then
+    if [[ ! -z "$only_files" ]]; then
+      keep=$(echo "$link" | grep "$only_files")
+    elif [[ ! -z "$not_files" ]]; then
       keep=$(echo "$link" | grep -v "$not_files")
     fi
     if [[ -z "$keep" ]]; then
@@ -123,6 +125,7 @@ download_folder() {
 
 logfile="/dev/null"
 not_files=""
+only_files=""
 above_version=""
 while [[ "$#" -gt 0 ]]; do case $1 in
   -h|--help) echo "Usage:"
@@ -130,12 +133,17 @@ while [[ "$#" -gt 0 ]]; do case $1 in
              echo "--not-files FILTER         Skip files/folders with certain patterns by running"
              echo "                           grep -v 'FILTER' on the list of './NAME' entries"
              echo "                           (e.g., 'vmware\|virtualbox')"
+             echo "--only-files FILTER        Mirror files/folders only with certain patterns by running"
+             echo "                           grep 'FILTER' on the list of './NAME' entries"
+             echo "                           (e.g., 'vmware\|virtualbox')"
+             echo "  NOTE: Only one of two options, --not-files and --only-files, should be used."
              echo "--logfile FILE             Write detailed log to FILE (can also be /dev/stderr)"
              echo "--help                     Show flags"
              exit 0;;
   --logfile) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); logfile=$(readlink -f "$1")
              [[ -z "$logfile" ]] && (echo "Error: readlink utility missing?" >> /dev/stderr ; exit 1);;
   --not-files) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); not_files="$1";;
+  --only-files) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); only_files="$1";;
   --above-version) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); above_version="$1";;
   *) echo "Unknown flag passed: $1"; exit 1;;
 esac; shift; done
