@@ -39,6 +39,20 @@ download_file() {
   local url="$1"
   local file="$2"
   local log=""
+
+  # Filtering with only_files should happen only when downloading a file,
+  # instead of downloading a folder. That's because in the context of
+  # downloading a folder, it's not possible to get the final file name, due to
+  # the recursive logic in download_folder().
+  # As the most distinguishable provider names are included in the file name,
+  # this mechanism should work fine.
+  if [[ -n "$only_files" ]]; then
+    if [[ -z "$(echo "$file" | grep "$only_files")" ]]; then
+      echo "Skipping $file as it does not match with list of files $only_files"
+      return 0
+    fi
+  fi
+
   if [[ -f "$file" ]]; then
     local etag=$(caddy_etag "$file")
     log=$(curl "$url" -I -H "If-None-Match: $etag" $CURLARGS 2>&1)
@@ -87,9 +101,7 @@ download_folder() {
   # Appended paths will start with "./" but that's ok for Caddy
   for link in $links; do
     local keep="yes"
-    if [[ ! -z "$only_files" ]]; then
-      keep=$(echo "$link" | grep "$only_files")
-    elif [[ ! -z "$not_files" ]]; then
+    if [[ ! -z "$not_files" ]]; then
       keep=$(echo "$link" | grep -v "$not_files")
     fi
     if [[ -z "$keep" ]]; then
