@@ -18,6 +18,10 @@ Usage:
 --not-files FILTER         Skip files/folders with certain patterns by running
                            grep -v 'FILTER' on the list of './NAME' entries
                            (e.g., 'vmware\|virtualbox')
+--only-files FILTER        Mirror files only with certain patterns by running
+                           grep 'FILTER' on the list of './NAME' entries
+                           (e.g., 'vmware\|virtualbox')
+  NOTE: Only one of two options, --not-files and --only-files, should be used.
 --logfile FILE             Write detailed log to FILE (can also be /dev/stderr)
 --help                     Show flags
 ```

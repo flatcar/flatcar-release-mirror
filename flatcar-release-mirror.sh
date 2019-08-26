@@ -145,7 +145,7 @@ while [[ "$#" -gt 0 ]]; do case $1 in
              echo "--not-files FILTER         Skip files/folders with certain patterns by running"
              echo "                           grep -v 'FILTER' on the list of './NAME' entries"
              echo "                           (e.g., 'vmware\|virtualbox')"
-             echo "--only-files FILTER        Mirror files/folders only with certain patterns by running"
+             echo "--only-files FILTER        Mirror files only with certain patterns by running"
              echo "                           grep 'FILTER' on the list of './NAME' entries"
              echo "                           (e.g., 'vmware\|virtualbox')"
              echo "  NOTE: Only one of two options, --not-files and --only-files, should be used."
