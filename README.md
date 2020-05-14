@@ -23,5 +23,7 @@ Usage:
                            (e.g., 'vmware\|virtualbox')
   NOTE: Only one of two options, --not-files and --only-files, should be used.
 --logfile FILE             Write detailed log to FILE (can also be /dev/stderr)
+--channels CHANNELS        Coma-separated list of channels to mirror (e.g. stable,beta).
+                           By default all channels are mirrored.
 --help                     Show flags
 ```

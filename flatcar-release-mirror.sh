@@ -39,6 +39,7 @@ download_file() {
   local url="$1"
   local file="$2"
   local log=""
+  local response_code=""
 
   # Filtering with only_files should happen only when downloading a file,
   # instead of downloading a folder. That's because in the context of
@@ -55,14 +56,13 @@ download_file() {
 
   if [[ -f "$file" ]]; then
     local etag=$(caddy_etag "$file")
-    log=$(curl "$url" -I -H "If-None-Match: $etag" $CURLARGS 2>&1)
+    response_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" -I -H "If-None-Match: $etag" $CURLARGS 2>&1)
     if [[ "$?" != "0" ]]; then
       echo
       echo "Failed to fetch ETag of $url" >> /dev/stderr
       return 1
     fi
-    local notmodified=$(echo "$log" | grep "304 Not Modified")
-    if [[ ! -z "$notmodified" ]]; then
+    if [[ "$response_code" -eq 304 ]]; then
       echo -n ","
       echo "Skipping unmodified $url" >> "$logfile"
       return 0
@@ -139,6 +139,7 @@ logfile="/dev/null"
 not_files=""
 only_files=""
 above_version=""
+channels="stable,beta,alpha,edge"
 while [[ "$#" -gt 0 ]]; do case $1 in
   -h|--help) echo "Usage:"
              echo "--above-version VERSION    Skip folders which have versions that are lower than VERSION (e.g., 2000)"
@@ -150,6 +151,8 @@ while [[ "$#" -gt 0 ]]; do case $1 in
              echo "                           (e.g., 'vmware\|virtualbox')"
              echo "  NOTE: Only one of two options, --not-files and --only-files, should be used."
              echo "--logfile FILE             Write detailed log to FILE (can also be /dev/stderr)"
+             echo "--channels CHANNELS        Coma-separated list of channels to mirror (e.g. stable,beta)."
+             echo "                           By default all channels are mirrored."
              echo "--help                     Show flags"
              exit 0;;
   --logfile) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); logfile=$(readlink -f "$1")
@@ -157,6 +160,7 @@ while [[ "$#" -gt 0 ]]; do case $1 in
   --not-files) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); not_files="$1";;
   --only-files) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); only_files="$1";;
   --above-version) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); above_version="$1";;
+  --channels) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); channels="$1";;
   *) echo "Unknown flag passed: $1"; exit 1;;
 esac; shift; done
 
@@ -171,7 +175,7 @@ else
   rm "/tmp/mirror-err" 2> /dev/null || true
 fi
 
-channels="stable beta alpha edge"
+channels="$(echo $channels | sed 's/,/ /g')"
 # Not quoted to create all subdirectories
 mkdir -p $channels
 
