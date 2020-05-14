@@ -49,7 +49,7 @@ download_file() {
   # this mechanism should work fine.
   if [[ -n "$only_files" ]]; then
     if [[ -z "$(echo "$file" | grep "$only_files")" ]]; then
-      echo "Skipping $file as it does not match with list of files $only_files"
+      echo "Skipping $file as it does not match with list of files $only_files" >> "$logfile"
       return 0
     fi
   fi
