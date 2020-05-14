@@ -39,6 +39,7 @@ download_file() {
   local url="$1"
   local file="$2"
   local log=""
+  local response_code=""
 
   # Filtering with only_files should happen only when downloading a file,
   # instead of downloading a folder. That's because in the context of
@@ -55,14 +56,13 @@ download_file() {
 
   if [[ -f "$file" ]]; then
     local etag=$(caddy_etag "$file")
-    log=$(curl "$url" -I -H "If-None-Match: $etag" $CURLARGS 2>&1)
+    response_code=$(curl -s -o /dev/null -w "%{http_code}" "$url" -I -H "If-None-Match: $etag" $CURLARGS 2>&1)
     if [[ "$?" != "0" ]]; then
       echo
       echo "Failed to fetch ETag of $url" >> /dev/stderr
       return 1
     fi
-    local notmodified=$(echo "$log" | grep "304 Not Modified")
-    if [[ ! -z "$notmodified" ]]; then
+    if [[ "$response_code" -eq 304 ]]; then
       echo -n ","
       echo "Skipping unmodified $url" >> "$logfile"
       return 0
