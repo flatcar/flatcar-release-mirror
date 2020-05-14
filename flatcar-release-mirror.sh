@@ -74,14 +74,16 @@ download_file() {
     echo -n "."
     echo "Downloading $url"  >> "$logfile"
   fi
+  rm -f "$file".tmp
   # No "-C -" because we might have changed contents
   # Use "-R" to keep the original time for the ETag
-  log=$(curl "$url" -R -o "$file" $CURLARGS 2>&1)
+  log=$(curl "$url" -R -o "$file".tmp $CURLARGS 2>&1)
   if [[ "$?" != "0" ]]; then
     echo
     echo "Failed to download $url" >> /dev/stderr
     return 1
   fi
+  mv -f "$file".tmp "$file"
   return 0
 }
 
