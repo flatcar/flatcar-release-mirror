@@ -131,13 +131,11 @@ download_folder() {
           echo "Skipping folder version: $link" >> "$logfile"
         fi
       else
-        if [[ ! $url =~ "flatcar-linux.net/"$ ]]; then
-          for ar in $arch; do
-            if [[ $url == *"$ar-usr"* ]]; then
-              download_file "${url}$link" "$link" || return 1
-            fi
-          done
-        fi
+        for ar in $arch; do
+          if [[ $url == *"$ar-usr"* ]]; then
+            download_file "${url}$link" "$link" || return 1
+          fi
+        done
       fi
     fi
   done
