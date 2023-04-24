@@ -25,5 +25,6 @@ Usage:
 --logfile FILE             Write detailed log to FILE (can also be /dev/stderr)
 --channels CHANNELS        Coma-separated list of channels to mirror (e.g. stable,beta).
                            By default all channels are mirrored.
+--arch ARCH                Filter the only architecture to download (either amd64 or arm64).
 --help                     Show flags
 ```
