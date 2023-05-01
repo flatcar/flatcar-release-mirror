@@ -91,6 +91,7 @@ download_folder() {
   # Expects a final "/" in the url
   # Uses knowledge about Caddy's folder link conventions
   local url="$1"
+  local arch="$2"
   echo "Entering folder $url" >> "$logfile"
   local fetch=""
   fetch=$(curl "$url" $CURLARGS)
@@ -124,13 +125,17 @@ download_folder() {
         if [[ -z "$above_version" ]] || [[ -z "$is_version" ]] || [ "$version" -gt "$above_version" ]; then
           mkdir -p "$link"
           cd "$link"
-          download_folder "${url}$link" || return 1
+          download_folder "${url}$link" "$arch" || return 1
           cd ..
         else
           echo "Skipping folder version: $link" >> "$logfile"
         fi
       else
-        download_file "${url}$link" "$link" || return 1
+        for ar in $arch; do
+          if [[ $url == *"$ar-usr"* ]]; then
+            download_file "${url}$link" "$link" || return 1
+          fi
+        done
       fi
     fi
   done
@@ -142,6 +147,7 @@ not_files=""
 only_files=""
 above_version=""
 channels="stable,beta,alpha,edge"
+arch="amd64,arm64"
 while [[ "$#" -gt 0 ]]; do case $1 in
   -h|--help) echo "Usage:"
              echo "--above-version VERSION    Skip folders which have versions that are lower than VERSION (e.g., 2000)"
@@ -155,6 +161,7 @@ while [[ "$#" -gt 0 ]]; do case $1 in
              echo "--logfile FILE             Write detailed log to FILE (can also be /dev/stderr)"
              echo "--channels CHANNELS        Coma-separated list of channels to mirror (e.g. stable,beta)."
              echo "                           By default all channels are mirrored."
+             echo "--arch ARCH                Filter the only architecture to download (either amd64 or arm64)."
              echo "--help                     Show flags"
              exit 0;;
   --logfile) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); logfile=$(readlink -f "$1")
@@ -163,6 +170,7 @@ while [[ "$#" -gt 0 ]]; do case $1 in
   --only-files) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); only_files="$1";;
   --above-version) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); above_version="$1";;
   --channels) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); channels="$1";;
+  --arch) shift; [[ "$#" -eq 0 ]] && (echo "Expecting value after flag"; exit 1); arch="$1";;
   *) echo "Unknown flag passed: $1"; exit 1;;
 esac; shift; done
 
@@ -178,6 +186,7 @@ else
 fi
 
 channels="$(echo $channels | sed 's/,/ /g')"
+arch="$(echo $arch | sed 's/,/ /g')"
 # Not quoted to create all subdirectories
 mkdir -p $channels
 
@@ -188,7 +197,7 @@ echo '("." means downloading, "," means skipping, "+" means updating)'
 for channel in $channels; do
   cd "$channel"
   (base="https://${channel}.release.flatcar-linux.net/"
-  download_folder "$base" || touch "/tmp/mirror-err") &
+  download_folder "$base" "$arch" || touch "/tmp/mirror-err") &
   cd ..
 done
 # Wait for all forks to finish
