@@ -111,7 +111,7 @@ download_folder() {
       echo "Skipping pattern: $link" >> "$logfile"
     else
       if [[ "$link" == "./current/" ]]; then
-        local version=$(curl "${url}current/version.txt" $CURLARGS | grep "FLATCAR_VERSION=" | cut -d "=" -f 2)
+        local version=$(source <(curl "${url}current/version.txt" $CURLARGS); echo "${FLATCAR_VERSION}")
         if [[ -z "$version" ]]; then
           echo
           echo "Failed to fetch version information from ./current/version.txt" >> /dev/stderr
